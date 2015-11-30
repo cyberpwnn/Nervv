@@ -1,8 +1,13 @@
 package com.ulticraft.nervv;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.examples.HtmlToPlainText;
 
@@ -30,9 +35,77 @@ public class LangUtils
 		return tk.tokenize(text);
 	}
 	
+	public static String stripArtifacts(String text)
+	{
+		text = StringUtils.remove(text, "<>");
+		text = StringUtils.remove(text, "^");
+		text = StringUtils.remove(text, "*");
+		text = text.replaceAll("\\r|\\n", " ");
+		return text;
+	}
+	
+	public static String getContext(String uri)
+	{
+		URL url;
+		InputStream is = null;
+		BufferedReader br;
+		String line;
+		
+		try
+		{
+			url = new URL(uri);
+			is = url.openStream();
+			br = new BufferedReader(new InputStreamReader(is));
+			String text = "";
+			
+			while ((line = br.readLine()) != null)
+			{
+				text = text + line + " ";
+			}
+			
+			return stripArtifacts(htmlToText(text));
+		}
+		
+		catch (MalformedURLException mue)
+		{
+			mue.printStackTrace();
+		}
+		
+		catch (IOException ioe)
+		{
+			ioe.printStackTrace();
+		}
+		
+		finally
+		{
+			try
+			{
+				if (is != null)
+				{
+					is.close();
+				}
+			}
+			
+			catch (IOException ioe)
+			{
+				// nothing to see here
+			}
+		}
+		
+		return null;
+	}
+	
 	public static String htmlToText(String html)
 	{
-		return new HtmlToPlainText().getPlainText(Jsoup.parse(html));
+		try
+		{
+			return new HtmlToPlainText().getPlainText(Jsoup.parse(html));
+		}
+		
+		catch(Exception e)
+		{
+			return "server error";
+		}
 	}
 	
 	private static void check()
@@ -87,7 +160,7 @@ public class LangUtils
 		catch (IOException e)
 		{
 			e.printStackTrace();
-		} 
+		}
 		
 		finally
 		{
@@ -96,11 +169,11 @@ public class LangUtils
 				try
 				{
 					modelIn.close();
-				} 
+				}
 				
 				catch (IOException e)
 				{
-					
+				
 				}
 			}
 		}
